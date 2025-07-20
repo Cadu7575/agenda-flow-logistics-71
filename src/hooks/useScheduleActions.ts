@@ -135,6 +135,7 @@ export const useScheduleActions = () => {
 
   return {
     sendingEmail,
+    sendApprovalEmail,
     handleApproval,
     handleReschedule
   };

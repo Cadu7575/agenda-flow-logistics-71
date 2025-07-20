@@ -12,7 +12,7 @@ const SchedulingSystem = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState<string>("");
   
-  const { availableTimes, occupiedTimes, loadingTimes } = useAvailableTimeSlots(selectedDate);
+  const { availableTimes, occupiedTimes, loadingTimes, refetch } = useAvailableTimeSlots(selectedDate);
 
   // Get all possible times from the hook
   const allTimes = [
@@ -158,12 +158,13 @@ const SchedulingSystem = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-              <SchedulingForm
-                selectedDate={selectedDate}
-                selectedTime={selectedTime}
-                setSelectedTime={setSelectedTime}
-                availableTimes={availableTimes}
-              />
+        <SchedulingForm 
+          selectedDate={selectedDate}
+          selectedTime={selectedTime}
+          setSelectedTime={setSelectedTime}
+          availableTimes={availableTimes}
+          onRefreshTimes={refetch}
+        />
             </CardContent>
           </Card>
         </div>

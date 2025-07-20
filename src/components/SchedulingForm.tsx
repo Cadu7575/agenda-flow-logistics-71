@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,19 +11,22 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useScheduleActions } from '@/hooks/useScheduleActions';
 
 interface SchedulingFormProps {
   selectedDate: Date | undefined;
   selectedTime: string;
   setSelectedTime: (time: string) => void;
   availableTimes: string[];
+  onRefreshTimes: () => void;
 }
 
 const SchedulingForm = ({ 
   selectedDate, 
   selectedTime, 
   setSelectedTime, 
-  availableTimes
+  availableTimes,
+  onRefreshTimes
 }: SchedulingFormProps) => {
   const [supplierName, setSupplierName] = useState<string>("");
   const [vehicleType, setVehicleType] = useState<string>("");
@@ -31,13 +34,59 @@ const SchedulingForm = ({
   const [palletQuantity, setPalletQuantity] = useState<string>("");
   const [observations, setObservations] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [showTimes, setShowTimes] = useState(false);
+  const [supplierAlreadyScheduled, setSupplierAlreadyScheduled] = useState(false);
   const { user } = useAuth();
+  const { sendApprovalEmail } = useScheduleActions();
+
+  // Verificar se fornecedor já tem agendamento no dia
+  const checkSupplierSchedule = async () => {
+    if (!selectedDate || !supplierName.trim()) {
+      setSupplierAlreadyScheduled(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('schedules')
+        .select('id')
+        .eq('supplier_name', supplierName.trim())
+        .eq('scheduled_date', format(selectedDate, 'yyyy-MM-dd'))
+        .in('status', ['approved', 'pending']);
+
+      if (error) throw error;
+
+      setSupplierAlreadyScheduled(data && data.length > 0);
+    } catch (error) {
+      console.error('Error checking supplier schedule:', error);
+      setSupplierAlreadyScheduled(false);
+    }
+  };
+
+  // Verificar quando fornecedor ou data mudam
+  useEffect(() => {
+    checkSupplierSchedule();
+  }, [supplierName, selectedDate]);
+
+  // Mostrar horários apenas após quantidade de pallets
+  useEffect(() => {
+    setShowTimes(palletQuantity && parseInt(palletQuantity) > 0);
+  }, [palletQuantity]);
 
   const handleSchedule = async () => {
     if (!selectedDate || !selectedTime || !supplierName || !vehicleType || !purchaseOrder || !palletQuantity) {
       toast({
         title: "Campos obrigatórios",
         description: "Por favor, preencha todos os campos obrigatórios.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (supplierAlreadyScheduled) {
+      toast({
+        title: "Fornecedor já agendado",
+        description: "Este fornecedor já possui um agendamento para este dia. Escolha outra data.",
         variant: "destructive"
       });
       return;
@@ -55,7 +104,7 @@ const SchedulingForm = ({
     setLoading(true);
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('schedules')
         .insert({
           user_id: user.id,
@@ -67,16 +116,23 @@ const SchedulingForm = ({
           purchase_order: purchaseOrder,
           pallet_quantity: parseInt(palletQuantity),
           observations: observations || null,
-          status: 'pending'
-        });
+          status: 'approved' // Auto-aprovado
+        })
+        .select()
+        .single();
 
       if (error) {
         throw error;
       }
 
+      // Enviar email automaticamente
+      if (data?.id) {
+        await sendApprovalEmail(data.id, 'approved');
+      }
+
       toast({
-        title: "Agendamento solicitado!",
-        description: `Agendamento para ${format(selectedDate, "dd/MM/yyyy", { locale: ptBR })} às ${selectedTime} enviado para aprovação.`,
+        title: "Agendamento confirmado!",
+        description: `Agendamento para ${format(selectedDate, "dd/MM/yyyy", { locale: ptBR })} às ${selectedTime} confirmado automaticamente.`,
       });
 
       // Reset form
@@ -86,6 +142,8 @@ const SchedulingForm = ({
       setPurchaseOrder("");
       setPalletQuantity("");
       setObservations("");
+      setShowTimes(false);
+      onRefreshTimes();
     } catch (error: any) {
       console.error('Error creating schedule:', error);
       toast({
@@ -112,8 +170,45 @@ const SchedulingForm = ({
           placeholder="Digite o nome do fornecedor"
           className="border-gray-300 focus:border-green-500"
         />
+        {supplierAlreadyScheduled && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+            <p className="text-red-800 text-sm">
+              ⚠️ Este fornecedor já possui um agendamento para este dia. Escolha outra data.
+            </p>
+          </div>
+        )}
       </div>
 
+      <div className="space-y-2">
+        <Label htmlFor="palletQuantity">Quantidade de Pallet *</Label>
+        <Input
+          id="palletQuantity"
+          type="number"
+          min="1"
+          value={palletQuantity}
+          onChange={(e) => setPalletQuantity(e.target.value)}
+          placeholder="Digite a quantidade de pallets"
+          className="border-gray-300 focus:border-green-500"
+        />
+      </div>
+
+      {showTimes && availableTimes.length > 0 && (
+        <div className="space-y-2">
+          <Label>Horário Disponível *</Label>
+          <Select value={selectedTime} onValueChange={setSelectedTime}>
+            <SelectTrigger className="border-gray-300 focus:border-green-500">
+              <SelectValue placeholder="Selecione um horário" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableTimes.map((time) => (
+                <SelectItem key={time} value={time}>
+                  {time}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {selectedTime && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -156,18 +251,6 @@ const SchedulingForm = ({
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="palletQuantity">Quantidade de Pallet *</Label>
-        <Input
-          id="palletQuantity"
-          type="number"
-          min="1"
-          value={palletQuantity}
-          onChange={(e) => setPalletQuantity(e.target.value)}
-          placeholder="Digite a quantidade de pallets"
-          className="border-gray-300 focus:border-green-500"
-        />
-      </div>
 
       <div className="space-y-2">
         <Label>Observações</Label>
@@ -181,10 +264,10 @@ const SchedulingForm = ({
 
       <Button 
         onClick={handleSchedule}
-        disabled={loading || !selectedTime || !supplierName || !vehicleType || !purchaseOrder || !palletQuantity}
+        disabled={loading || !selectedTime || !supplierName || !vehicleType || !purchaseOrder || !palletQuantity || supplierAlreadyScheduled}
         className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105"
       >
-        {loading ? 'Enviando...' : 'Solicitar Agendamento'}
+        {loading ? 'Processando...' : 'Confirmar Agendamento'}
       </Button>
     </div>
   );
