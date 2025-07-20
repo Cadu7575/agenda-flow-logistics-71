@@ -17,17 +17,13 @@ interface SchedulingFormProps {
   selectedTime: string;
   setSelectedTime: (time: string) => void;
   availableTimes: string[];
-  deliveryType: string;
-  onDeliveryTypeChange: (deliveryType: string) => void;
 }
 
 const SchedulingForm = ({ 
   selectedDate, 
   selectedTime, 
   setSelectedTime, 
-  availableTimes, 
-  deliveryType, 
-  onDeliveryTypeChange 
+  availableTimes
 }: SchedulingFormProps) => {
   const [supplierName, setSupplierName] = useState<string>("");
   const [vehicleType, setVehicleType] = useState<string>("");
@@ -38,7 +34,7 @@ const SchedulingForm = ({
   const { user } = useAuth();
 
   const handleSchedule = async () => {
-    if (!selectedDate || !selectedTime || !supplierName || !vehicleType || !deliveryType || !purchaseOrder || !palletQuantity) {
+    if (!selectedDate || !selectedTime || !supplierName || !vehicleType || !purchaseOrder || !palletQuantity) {
       toast({
         title: "Campos obrigatórios",
         description: "Por favor, preencha todos os campos obrigatórios.",
@@ -67,7 +63,7 @@ const SchedulingForm = ({
           scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
           scheduled_time: selectedTime,
           vehicle_type: vehicleType,
-          delivery_type: deliveryType,
+          delivery_type: 'geral',
           purchase_order: purchaseOrder,
           pallet_quantity: parseInt(palletQuantity),
           observations: observations || null,
@@ -89,7 +85,6 @@ const SchedulingForm = ({
       setVehicleType("");
       setPurchaseOrder("");
       setPalletQuantity("");
-      onDeliveryTypeChange("");
       setObservations("");
     } catch (error: any) {
       console.error('Error creating schedule:', error);
@@ -119,19 +114,6 @@ const SchedulingForm = ({
         />
       </div>
 
-      <div className="space-y-2">
-        <Label>Tipo de Entrega *</Label>
-        <Select value={deliveryType} onValueChange={onDeliveryTypeChange}>
-          <SelectTrigger className="border-gray-300 focus:border-green-500">
-            <SelectValue placeholder="Selecione o tipo de entrega" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="materias-primas">Matérias-primas</SelectItem>
-            <SelectItem value="inflamavel">Inflamável</SelectItem>
-            <SelectItem value="outros">Outros</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
 
       {selectedTime && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -142,7 +124,7 @@ const SchedulingForm = ({
             </span>
           </div>
           <div className="text-sm text-blue-600 mt-1">
-            {selectedDate && format(selectedDate, "dd/MM/yyyy", { locale: ptBR })} - {deliveryType}
+            {selectedDate && format(selectedDate, "dd/MM/yyyy", { locale: ptBR })}
           </div>
         </div>
       )}
@@ -199,7 +181,7 @@ const SchedulingForm = ({
 
       <Button 
         onClick={handleSchedule}
-        disabled={loading || !selectedTime || !supplierName || !vehicleType || !deliveryType || !purchaseOrder || !palletQuantity}
+        disabled={loading || !selectedTime || !supplierName || !vehicleType || !purchaseOrder || !palletQuantity}
         className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105"
       >
         {loading ? 'Enviando...' : 'Solicitar Agendamento'}

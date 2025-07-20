@@ -11,8 +11,6 @@ interface RescheduleDialogProps {
   onDateChange: (date: Date | undefined) => void;
   rescheduleTime: string;
   onTimeChange: (time: string) => void;
-  rescheduleDeliveryType: string;
-  onDeliveryTypeChange: (type: string) => void;
   availableTimes: string[];
   loadingTimes: boolean;
   onConfirm: () => void;
@@ -26,8 +24,6 @@ const RescheduleDialog = ({
   onDateChange,
   rescheduleTime,
   onTimeChange,
-  rescheduleDeliveryType,
-  onDeliveryTypeChange,
   availableTimes,
   loadingTimes,
   onConfirm,
@@ -40,22 +36,6 @@ const RescheduleDialog = ({
           <DialogTitle>Reagendar Agendamento</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-2">Tipo de Entrega:</label>
-            <select
-              value={rescheduleDeliveryType}
-              onChange={(e) => {
-                onDeliveryTypeChange(e.target.value);
-                onTimeChange(''); // Reset time when delivery type changes
-              }}
-              className="w-full p-2 border border-gray-300 rounded-md"
-            >
-              <option value="">Selecione o tipo de entrega</option>
-              <option value="materias-primas">Matérias-primas</option>
-              <option value="inflamavel">Inflamável</option>
-              <option value="outros">Outros</option>
-            </select>
-          </div>
           <div>
             <label className="block text-sm font-medium mb-2">Nova Data:</label>
             <input
@@ -80,7 +60,7 @@ const RescheduleDialog = ({
               value={rescheduleTime}
               onChange={(e) => onTimeChange(e.target.value)}
               className="w-full p-2 border border-gray-300 rounded-md"
-              disabled={loadingTimes || !rescheduleDate || !rescheduleDeliveryType}
+              disabled={loadingTimes || !rescheduleDate}
             >
               <option value="">Selecione um horário</option>
               {availableTimes.map((time) => (
@@ -89,15 +69,15 @@ const RescheduleDialog = ({
                 </option>
               ))}
             </select>
-            {rescheduleDate && rescheduleDeliveryType && availableTimes.length === 0 && !loadingTimes && (
-              <p className="text-sm text-red-500 mt-1">Nenhum horário disponível para esta data e tipo de entrega</p>
+            {rescheduleDate && availableTimes.length === 0 && !loadingTimes && (
+              <p className="text-sm text-red-500 mt-1">Nenhum horário disponível para esta data</p>
             )}
           </div>
           <div className="flex gap-2">
             <Button 
               onClick={onConfirm}
               className="bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={isLoading || !rescheduleDate || !rescheduleTime || !rescheduleDeliveryType}
+              disabled={isLoading || !rescheduleDate || !rescheduleTime}
             >
               <CalendarDays className="h-4 w-4 mr-2" />
               {isLoading ? 'Reagendando...' : 'Confirmar Reagendamento'}

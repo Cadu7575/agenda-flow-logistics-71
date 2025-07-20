@@ -19,12 +19,11 @@ const ApprovalDashboard = () => {
   const [rejectionReason, setRejectionReason] = useState('');
   const [rescheduleDate, setRescheduleDate] = useState<Date | undefined>(undefined);
   const [rescheduleTime, setRescheduleTime] = useState('');
-  const [rescheduleDeliveryType, setRescheduleDeliveryType] = useState('');
   const [rescheduleDialogOpen, setRescheduleDialogOpen] = useState(false);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [currentRequestId, setCurrentRequestId] = useState<number | null>(null);
 
-  const { availableTimes, loadingTimes } = useAvailableTimeSlots(rescheduleDate, rescheduleDeliveryType);
+  const { availableTimes, loadingTimes } = useAvailableTimeSlots(rescheduleDate);
   const { sendingEmail, handleApproval, handleReschedule } = useScheduleActions();
 
   useEffect(() => {
@@ -91,11 +90,9 @@ const ApprovalDashboard = () => {
   };
 
   const onReschedule = (id: number) => {
-    const request = scheduleRequests.find(req => req.id === id);
     setCurrentRequestId(id);
     setRescheduleDate(undefined);
     setRescheduleTime('');
-    setRescheduleDeliveryType(request?.delivery_type || '');
     setRescheduleDialogOpen(true);
   };
 
@@ -193,8 +190,6 @@ const ApprovalDashboard = () => {
           onDateChange={setRescheduleDate}
           rescheduleTime={rescheduleTime}
           onTimeChange={setRescheduleTime}
-          rescheduleDeliveryType={rescheduleDeliveryType}
-          onDeliveryTypeChange={setRescheduleDeliveryType}
           availableTimes={availableTimes}
           loadingTimes={loadingTimes}
           onConfirm={confirmReschedule}

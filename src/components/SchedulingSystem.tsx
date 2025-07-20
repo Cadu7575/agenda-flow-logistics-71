@@ -11,15 +11,14 @@ import SchedulingForm from './SchedulingForm';
 const SchedulingSystem = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState<string>("");
-  const [deliveryType, setDeliveryType] = useState<string>("");
   
-  const { availableTimes, occupiedTimes, loadingTimes } = useAvailableTimeSlots(selectedDate, deliveryType);
+  const { availableTimes, occupiedTimes, loadingTimes } = useAvailableTimeSlots(selectedDate);
 
   // Get all possible times from the hook
   const allTimes = [
     "06:00", "06:30", "07:00", "07:30", "08:00", "08:30", 
     "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", 
-    "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", 
+    "13:30", "14:00", "14:30", "15:00", "15:30", 
     "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", 
     "19:00", "19:30", "20:00"
   ];
@@ -48,11 +47,6 @@ const SchedulingSystem = () => {
     return time > currentTime;
   };
 
-  // Reset time when delivery type changes
-  const handleDeliveryTypeChange = (newDeliveryType: string) => {
-    setDeliveryType(newDeliveryType);
-    setSelectedTime(""); // Reset selected time when delivery type changes
-  };
 
   return (
     <section className="py-20 bg-gradient-to-br from-gray-50 to-green-50">
@@ -85,7 +79,7 @@ const SchedulingSystem = () => {
               />
               
               {/* Time Grid */}
-              {selectedDate && deliveryType && (
+              {selectedDate && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-gray-900">
@@ -94,10 +88,6 @@ const SchedulingSystem = () => {
                     {loadingTimes && (
                       <div className="text-sm text-gray-500">Carregando...</div>
                     )}
-                  </div>
-                  
-                  <div className="text-sm text-blue-600 bg-blue-50 p-3 rounded-lg">
-                    Tipo de entrega selecionado: <strong>{deliveryType}</strong>
                   </div>
                   
                   <div className="grid grid-cols-3 gap-2">
@@ -156,13 +146,6 @@ const SchedulingSystem = () => {
                 </div>
               )}
 
-              {selectedDate && !deliveryType && (
-                <div className="text-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-yellow-800">
-                    Selecione o tipo de entrega no formulário para ver os horários disponíveis
-                  </p>
-                </div>
-              )}
             </CardContent>
           </Card>
 
@@ -180,8 +163,6 @@ const SchedulingSystem = () => {
                 selectedTime={selectedTime}
                 setSelectedTime={setSelectedTime}
                 availableTimes={availableTimes}
-                deliveryType={deliveryType}
-                onDeliveryTypeChange={handleDeliveryTypeChange}
               />
             </CardContent>
           </Card>
