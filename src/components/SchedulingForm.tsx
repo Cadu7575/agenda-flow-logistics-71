@@ -19,6 +19,8 @@ interface SchedulingFormProps {
   setSelectedTime: (time: string) => void;
   availableTimes: string[];
   onRefreshTimes: () => void;
+  palletQuantity: string;
+  setPalletQuantity: (quantity: string) => void;
 }
 
 const SchedulingForm = ({ 
@@ -26,15 +28,15 @@ const SchedulingForm = ({
   selectedTime, 
   setSelectedTime, 
   availableTimes,
-  onRefreshTimes
+  onRefreshTimes,
+  palletQuantity,
+  setPalletQuantity
 }: SchedulingFormProps) => {
   const [supplierName, setSupplierName] = useState<string>("");
   const [vehicleType, setVehicleType] = useState<string>("");
   const [purchaseOrder, setPurchaseOrder] = useState<string>("");
-  const [palletQuantity, setPalletQuantity] = useState<string>("");
   const [observations, setObservations] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const [showTimes, setShowTimes] = useState(false);
   const [supplierAlreadyScheduled, setSupplierAlreadyScheduled] = useState(false);
   const { user } = useAuth();
   const { sendApprovalEmail } = useScheduleActions();
@@ -67,11 +69,6 @@ const SchedulingForm = ({
   useEffect(() => {
     checkSupplierSchedule();
   }, [supplierName, selectedDate]);
-
-  // Mostrar horários apenas após quantidade de pallets
-  useEffect(() => {
-    setShowTimes(palletQuantity && parseInt(palletQuantity) > 0);
-  }, [palletQuantity]);
 
   const handleSchedule = async () => {
     if (!selectedDate || !selectedTime || !supplierName || !vehicleType || !purchaseOrder || !palletQuantity) {
@@ -142,7 +139,6 @@ const SchedulingForm = ({
       setPurchaseOrder("");
       setPalletQuantity("");
       setObservations("");
-      setShowTimes(false);
       onRefreshTimes();
     } catch (error: any) {
       console.error('Error creating schedule:', error);
@@ -192,23 +188,6 @@ const SchedulingForm = ({
         />
       </div>
 
-      {showTimes && availableTimes.length > 0 && (
-        <div className="space-y-2">
-          <Label>Horário Disponível *</Label>
-          <Select value={selectedTime} onValueChange={setSelectedTime}>
-            <SelectTrigger className="border-gray-300 focus:border-green-500">
-              <SelectValue placeholder="Selecione um horário" />
-            </SelectTrigger>
-            <SelectContent>
-              {availableTimes.map((time) => (
-                <SelectItem key={time} value={time}>
-                  {time}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
 
       {selectedTime && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

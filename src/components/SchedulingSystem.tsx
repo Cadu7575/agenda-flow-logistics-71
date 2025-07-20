@@ -11,6 +11,7 @@ import SchedulingForm from './SchedulingForm';
 const SchedulingSystem = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState<string>("");
+  const [palletQuantity, setPalletQuantity] = useState<string>("");
   
   const { availableTimes, occupiedTimes, loadingTimes, refetch } = useAvailableTimeSlots(selectedDate);
 
@@ -24,7 +25,8 @@ const SchedulingSystem = () => {
   ];
 
   const handleTimeSelect = (time: string) => {
-    if (availableTimes.includes(time)) {
+    // Só permitir seleção se tem quantidade de pallet
+    if (availableTimes.includes(time) && palletQuantity && parseInt(palletQuantity) > 0) {
       setSelectedTime(time);
     }
   };
@@ -95,10 +97,11 @@ const SchedulingSystem = () => {
                       const isAvailable = availableTimes.includes(time);
                       const isSelected = selectedTime === time;
                       const isOccupied = occupiedTimes.includes(time);
+                      const hasQuantity = palletQuantity && parseInt(palletQuantity) > 0;
                       const shouldShow = shouldShowTime(time);
                       
-                      // Não mostrar horários que já passaram
-                      if (!shouldShow) {
+                      // Não mostrar horários que já passaram OU se não tem quantidade de pallet
+                      if (!shouldShow || !hasQuantity) {
                         return null;
                       }
                       
@@ -164,6 +167,8 @@ const SchedulingSystem = () => {
           setSelectedTime={setSelectedTime}
           availableTimes={availableTimes}
           onRefreshTimes={refetch}
+          palletQuantity={palletQuantity}
+          setPalletQuantity={setPalletQuantity}
         />
             </CardContent>
           </Card>
