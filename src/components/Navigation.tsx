@@ -46,12 +46,19 @@ const Navigation = ({ activeSection, setActiveSection }: NavigationProps) => {
 
   const handleNavigation = (item: any) => {
     if (item.path.startsWith('/#')) {
-      navigate('/');
-      setTimeout(() => {
+      // Para navegação interna na mesma página
+      if (location.pathname === '/') {
+        // Atualizar apenas o hash
+        const hash = item.path.substring(1); // Remove o '/' inicial
+        window.location.hash = hash;
         setActiveSection(item.id);
-      }, 100);
+      } else {
+        navigate(item.path);
+      }
     } else {
+      // Para navegação para outras páginas
       navigate(item.path);
+      setActiveSection('');
     }
   };
 
@@ -77,7 +84,8 @@ const Navigation = ({ activeSection, setActiveSection }: NavigationProps) => {
           <div className="hidden md:flex items-center space-x-1">
             {navItems.map(item => {
               const Icon = item.icon;
-              const isActive = location.pathname === item.path || (item.id === activeSection && location.pathname === '/');
+              const isActive = (location.pathname === '/' && item.id === activeSection) || 
+                             (location.pathname === item.path && !item.path.startsWith('/#'));
               
               return (
                 <Button
@@ -133,7 +141,8 @@ const Navigation = ({ activeSection, setActiveSection }: NavigationProps) => {
             <div className="flex flex-col space-y-2">
               {navItems.map(item => {
                 const Icon = item.icon;
-                const isActive = location.pathname === item.path || (item.id === activeSection && location.pathname === '/');
+                const isActive = (location.pathname === '/' && item.id === activeSection) || 
+                               (location.pathname === item.path && !item.path.startsWith('/#'));
                 
                 return (
                   <Button

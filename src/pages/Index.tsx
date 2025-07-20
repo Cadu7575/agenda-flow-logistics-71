@@ -1,15 +1,29 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import Hero from '@/components/Hero';
 import SchedulingSystem from '@/components/SchedulingSystem';
 import ApprovalDashboard from '@/components/ApprovalDashboard';
 import LoginForm from '@/components/LoginForm';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLocation } from 'react-router-dom';
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState('home');
   const { isAuthenticated, userProfile } = useAuth();
+  const location = useLocation();
+  
+  // Gerenciar seção ativa baseada na URL
+  useEffect(() => {
+    const hash = location.hash;
+    if (hash === '#schedule') {
+      setActiveSection('schedule');
+    } else if (hash === '#dashboard') {
+      setActiveSection('dashboard');
+    } else {
+      setActiveSection('home');
+    }
+  }, [location.hash]);
 
   // If not authenticated, show login form
   if (!isAuthenticated) {
